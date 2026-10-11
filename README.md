@@ -482,4 +482,4 @@ MIT License · Built for **Altrix Labs Round 1** · **ByteXL HacXLerate 2026**
 ---
 
 **Built with 🩸 in India.**
-```
+
