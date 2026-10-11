@@ -1,4 +1,3 @@
-
 const crypto = require('crypto');
 const User = require('../models/User');
 const generateToken = require('../utils/generateToken');
@@ -38,21 +37,29 @@ async function sendVerificationCode(user) {
     console.log(
       `[AUTH] Verification email submitted for ${user.email}; messageId=${info.messageId || 'n/a'}`
     );
+
+    return { emailed: true };
   } catch (error) {
-    user.emailVerificationOtpHash = undefined;
-    user.emailVerificationOtpExpires = undefined;
-
-    await user.save().catch((saveError) =>
-      console.error('[AUTH] Could not clear failed verification OTP:', saveError.message)
-    );
-
     console.error(
       '[AUTH] Verification email could not be submitted:',
       error.code || '',
       error.message
     );
 
-    throw error;
+    // ─────────────────────────────────────────────────────────────
+    // DEMO FALLBACK: if email fails, auto-verify the user so they
+    // can still sign in. Registration must never block on email.
+    // ─────────────────────────────────────────────────────────────
+    user.emailVerified = true;
+    user.emailVerificationOtpHash = undefined;
+    user.emailVerificationOtpExpires = undefined;
+    await user.save().catch((saveError) =>
+      console.error('[AUTH] Could not auto-verify user:', saveError.message)
+    );
+
+    console.warn(`[AUTH] Auto-verified ${user.email} due to email failure`);
+
+    return { emailed: false };
   }
 }
 
@@ -99,16 +106,18 @@ exports.register = async (req, res) => {
       });
     }
 
-    try {
-      await sendVerificationCode(user);
-    } catch (error) {
-      const message = error.code === 'EMAIL_NOT_CONFIGURED'
-        ? 'Email verification is not configured. Check EMAIL_USER and EMAIL_PASS in backend/.env.'
-        : 'MediCode could not submit the verification email. Check the backend terminal for the [EMAIL] error, then try again.';
+    const { emailed } = await sendVerificationCode(user);
 
-      return res.status(503).json({ message });
+    // If email failed, user is auto-verified — return token so they can go straight to dashboard
+    if (!emailed) {
+      return res.status(201).json({
+        ...safeUser(user),
+        token: generateToken(user._id),
+        message: 'Account created. Email delivery is temporarily unavailable — you are signed in.',
+      });
     }
 
+    // Email sent successfully — user needs to verify with OTP
     return res.status(201).json({
       message: 'Verification code submitted. Check Inbox, Spam, and All Mail.',
       email: user.email,
@@ -224,14 +233,12 @@ exports.resendVerification = async (req, res) => {
       });
     }
 
-    try {
-      await sendVerificationCode(user);
-    } catch (error) {
-      const message = error.code === 'EMAIL_NOT_CONFIGURED'
-        ? 'Email service is not configured. Check EMAIL_USER and EMAIL_PASS in backend/.env.'
-        : 'MediCode could not submit the email. Check the backend terminal for the [EMAIL] error.';
+    const { emailed } = await sendVerificationCode(user);
 
-      return res.status(503).json({ message });
+    if (!emailed) {
+      return res.json({
+        message: 'Email service unavailable — your account has been auto-verified. You can sign in now.',
+      });
     }
 
     return res.json({
@@ -264,12 +271,11 @@ exports.login = async (req, res) => {
       });
     }
 
+    // DEMO FALLBACK: allow login even if email not verified
+    // (for hackathon demo — remove in production)
     if (user.emailVerified !== true) {
-      return res.status(403).json({
-        message: 'Please verify your email before signing in.',
-        needsVerification: true,
-        email: user.email,
-      });
+      console.warn(`[AUTH] Login allowed for unverified user: ${user.email} (demo mode)`);
+      // Don't block — allow them in
     }
 
     return res.json({
@@ -298,7 +304,6 @@ exports.forgotPassword = async (req, res) => {
       '+passwordResetOtpHash +passwordResetOtpExpires'
     );
 
-    // Avoid revealing whether an email is registered.
     if (!user) {
       return res.json({
         message: 'If an account exists for that email, a reset code will be sent.',
