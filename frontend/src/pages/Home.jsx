@@ -21,6 +21,7 @@ export default function Home() {
   useEffect(() => {
     document.documentElement.style.scrollBehavior = 'smooth';
 
+    // Listen for demo-open events fired from HeroSection
     const handler = () => setDemoOpen(true);
     window.addEventListener('open-demo', handler);
 
@@ -125,6 +126,7 @@ export default function Home() {
           <CTASection />
         </ErrorBoundary>
 
+        {/* ═══════════ RICH FOOTER ═══════════ */}
         <footer className="relative border-t border-white/[0.06] bg-black/60 backdrop-blur-sm">
           <div className="max-w-7xl mx-auto px-6 py-16">
             <div className="grid grid-cols-2 md:grid-cols-5 gap-10">
@@ -226,6 +228,7 @@ export default function Home() {
         </footer>
       </div>
 
+      {/* Demo Modal */}
       <DemoModal open={demoOpen} onClose={() => setDemoOpen(false)} />
     </div>
   );

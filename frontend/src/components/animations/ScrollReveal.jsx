@@ -5,11 +5,13 @@ import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 import './ScrollReveal.css';
+import { useLanguage } from '../../context/LanguageContext';
 
 gsap.registerPlugin(ScrollTrigger);
 
 const ScrollReveal = ({
   children,
+  text = '',
   scrollContainerRef,
   enableBlur = true,
   baseOpacity = 0.1,
@@ -20,10 +22,12 @@ const ScrollReveal = ({
   rotationEnd = 'bottom bottom',
   wordAnimationEnd = 'bottom bottom'
 }) => {
+  const { t } = useLanguage();
+  const localizedChildren = typeof children === 'string' ? t(children) : (children ?? t(text));
   const containerRef = useRef(null);
 
   const splitText = useMemo(() => {
-    const text = typeof children === 'string' ? children : '';
+    const text = typeof localizedChildren === 'string' ? localizedChildren : '';
     return text.split(/(\s+)/).map((word, index) => {
       if (word.match(/^\s+$/)) return word;
       return (
@@ -32,7 +36,7 @@ const ScrollReveal = ({
         </span>
       );
     });
-  }, [children]);
+  }, [localizedChildren]);
 
   useEffect(() => {
     const el = containerRef.current;

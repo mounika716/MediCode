@@ -2,6 +2,7 @@
 
 import { motion } from 'motion/react';
 import { useEffect, useRef, useState, useMemo } from 'react';
+import { useLanguage } from '../../context/LanguageContext';
 
 const buildKeyframes = (from, steps) => {
   const keys = new Set([...Object.keys(from), ...steps.flatMap(s => Object.keys(s))]);
@@ -27,6 +28,8 @@ const BlurText = ({
   onAnimationComplete,
   stepDuration = 0.35
 }) => {
+  const { t } = useLanguage();
+  text = t(text);
   const elements = animateBy === 'words' ? text.split(' ') : text.split('');
   const [inView, setInView] = useState(false);
   const ref = useRef(null);

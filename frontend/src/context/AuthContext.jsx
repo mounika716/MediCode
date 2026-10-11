@@ -8,18 +8,66 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const stored = localStorage.getItem('hx_user');
+    let active = true;
+    let cachedUser = null;
+    const clearSession = () => {
+      localStorage.removeItem('hx_user');
+      localStorage.removeItem('hx_token');
+      setUser(null);
+    };
 
-    if (stored) {
-      try {
-        setUser(JSON.parse(stored));
-      } catch {
-        localStorage.removeItem('hx_user');
-        localStorage.removeItem('hx_token');
+    const onUnauthorized = () => clearSession();
+    window.addEventListener('auth:unauthorized', onUnauthorized);
+
+    const validateSession = async () => {
+      const token = localStorage.getItem('hx_token');
+      const stored = localStorage.getItem('hx_user');
+
+      if (stored) {
+        try {
+          cachedUser = JSON.parse(stored);
+        } catch {
+          clearSession();
+        }
       }
-    }
 
-    setLoading(false);
+      if (!token) {
+        clearSession();
+        if (active) setLoading(false);
+        return;
+      }
+
+      try {
+        const { data } = await API.get('/api/auth/me');
+        if (!active) return;
+        const nextUser = {
+          _id: data._id,
+          name: data.name,
+          email: data.email,
+          role: data.role,
+          avatar: data.avatar || '',
+          college: data.college || '',
+        };
+        localStorage.setItem('hx_user', JSON.stringify(nextUser));
+        setUser(nextUser);
+      } catch (error) {
+        if (!active) return;
+        if (error.response?.status === 401) {
+          clearSession();
+        } else if (cachedUser) {
+          // Keep the signed-in shell available during a temporary API outage.
+          setUser(cachedUser);
+        }
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+
+    validateSession();
+    return () => {
+      active = false;
+      window.removeEventListener('auth:unauthorized', onUnauthorized);
+    };
   }, []);
 
   const persist = (data) => {

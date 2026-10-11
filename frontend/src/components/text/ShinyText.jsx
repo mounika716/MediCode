@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { motion, useMotionValue, useAnimationFrame, useTransform } from 'motion/react';
+import { useLanguage } from '../../context/LanguageContext';
 import './ShinyText.css';
 
 const ShinyText = ({
@@ -17,6 +18,8 @@ const ShinyText = ({
   direction = 'left',
   delay = 0
 }) => {
+  const { t } = useLanguage();
+  text = t(text);
   const [isPaused, setIsPaused] = useState(false);
   const progress = useMotionValue(0);
   const elapsedRef = useRef(0);

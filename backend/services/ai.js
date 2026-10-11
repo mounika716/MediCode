@@ -27,8 +27,6 @@ async function generateJSON(prompt) {
 // ─────────────────────────────────────────────
 async function generateJSONWithImage(prompt, base64Image, mimeType = 'image/jpeg') {
   console.log('🔍 [VISION] Request started');
-  console.log('🔍 [VISION] Image size:', (base64Image.length / 1024).toFixed(0), 'KB');
-  console.log('🔍 [VISION] MIME type:', mimeType);
 
   const models = [
     'qwen/qwen3.8-27b',
@@ -62,26 +60,20 @@ async function generateJSONWithImage(prompt, base64Image, mimeType = 'image/jpeg
       });
 
       const text = completion.choices[0]?.message?.content || '{}';
-      console.log(`✅ [VISION] ${model} responded, length:`, text.length);
-      console.log('✅ [VISION] Preview:', text.slice(0, 200));
 
       try {
         const parsed = JSON.parse(text);
-        console.log('✅ [VISION] Parsed keys:', Object.keys(parsed).join(', '));
         return parsed;
-      } catch (parseErr) {
-        console.error(`❌ [VISION] ${model} returned non-JSON:`, text.slice(0, 300));
+      } catch {
         lastError = new Error('Vision AI returned invalid JSON');
         continue;
       }
     } catch (err) {
-      console.error(`❌ [VISION] ${model} failed:`, err.message);
       lastError = err;
       continue;
     }
   }
 
-  console.error('❌ [VISION] All vision models failed. Last error:', lastError?.message);
   throw lastError || new Error('Vision extraction failed');
 }
 

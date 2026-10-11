@@ -5,6 +5,7 @@ import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { SplitText as GSAPSplitText } from 'gsap/SplitText';
 import { useGSAP } from '@gsap/react';
+import { useLanguage } from '../../context/LanguageContext';
 
 gsap.registerPlugin(ScrollTrigger, GSAPSplitText, useGSAP);
 
@@ -23,6 +24,8 @@ const SplitText = ({
   tag = 'p',
   onLetterAnimationComplete
 }) => {
+  const { t } = useLanguage();
+  text = t(text);
   const ref = useRef(null);
   const animationCompletedRef = useRef(false);
   const onCompleteRef = useRef(onLetterAnimationComplete);

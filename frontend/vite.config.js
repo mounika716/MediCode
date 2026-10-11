@@ -9,16 +9,14 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   resolve: {
-    alias: {
-      '@': path.resolve(__dirname, './src'),
-    },
+    alias: { '@': path.resolve(__dirname, './src') },
   },
   server: {
     host: '0.0.0.0',
     port: 5173,
     strictPort: true,
     cors: true,
-    allowedHosts: ['localhost', '.devtunnels.ms', '.vercel.app'],
+    allowedHosts: ['localhost', '.devtunnels.ms', '10.182.27.70'],
     hmr: false,
   },
 });

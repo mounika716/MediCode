@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './context/AuthContext';
 import PrivateRoute from './components/PrivateRoute';
@@ -8,6 +8,9 @@ import useBrowserNotifications from './hooks/useBrowserNotifications';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import VerifyEmail from './pages/VerifyEmail';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 import Dashboard from './pages/Dashboard';
 import Playground3D from './pages/Playground3D';
 import History from './pages/History';
@@ -19,12 +22,14 @@ import UploadRecord from './pages/UploadRecord';
 import ReviewRecord from './pages/ReviewRecord';
 import RecordDetail from './pages/RecordDetail';
 import TeamIntro from './pages/TeamIntro';
+import GuestReport from './pages/GuestReport';
 import ClinicalNotes from './pages/modules/ClinicalNotes';
 import LabExplainer from './pages/modules/LabExplainer';
 import Triage from './pages/modules/Triage';
 import Medication from './pages/modules/Medication';
 import ResourceForecast from './pages/modules/ResourceForecast';
 import AmbientVisit from './pages/modules/AmbientVisit';
+import { LanguageProvider, LanguageSwitcher } from './context/LanguageContext';
 
 function InnerApp() {
   useBrowserNotifications();
@@ -46,16 +51,21 @@ function InnerApp() {
         }}
       />
       <BrowserRouter>
+        <LanguageHeader />
         <Routes>
           {/* 1. Team Intro — first thing judges see */}
           <Route path="/" element={<TeamIntro />} />
 
           {/* 2. Original cinematic MediCore landing page */}
           <Route path="/home" element={<Home />} />
+          <Route path="/try-report" element={<GuestReport />} />
 
           {/* Auth */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/verify-email" element={<VerifyEmail />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
 
           {/* App */}
           <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
@@ -86,10 +96,23 @@ function InnerApp() {
   );
 }
 
+function LanguageHeader() {
+  const { pathname } = useLocation();
+  // The landing page has its own navigation header, which includes the picker.
+  if (pathname === '/home') return null;
+  return (
+    <header className="relative z-[200] flex justify-end px-4 pt-3">
+      <LanguageSwitcher />
+    </header>
+  );
+}
+
 export default function App() {
   return (
     <AuthProvider>
-      <InnerApp />
+      <LanguageProvider>
+        <InnerApp />
+      </LanguageProvider>
     </AuthProvider>
   );
 }
